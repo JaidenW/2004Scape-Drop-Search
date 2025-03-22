@@ -1,0 +1,2 @@
+# requirements.txt
+fuzzywuzzy>=0.18.0
