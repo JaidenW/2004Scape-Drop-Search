@@ -22,3 +22,6 @@ This is just a really simple app to parse and search the existing drop tables in
 This is by no means a polished app, it has no GUI and works entirely in command prompt, it's the bare minimum to acomplish the goal. I don't really intend to add any new features, but that doesn't mean if you submit a PR i'll ignore it, it just does what i need it to do. If you want to add something to it, feel free. as long as it could be benificial to someone, i'll happily add it.
 
 This also does not have complete support for every drop, you'll note items named things like "defaultdrop" or "gemdrop", these are not handled by this script because you can generally inferr what those mean, (default drop i'm pretty sure is just bones)
+
+
+If you have any issues, or just want to say thanks, my IGN is Jaiden W
