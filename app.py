@@ -5,39 +5,61 @@ from fuzzywuzzy import fuzz, process
 
 class DropParser:
     def __init__(self):
-        self.folder_path = r"Server\data\src\scripts\drop tables\scripts"
+        self.base_paths = [
+            r"Server\data\src\scripts\drop tables\scripts",
+            r"Server\data\src\scripts\areas"
+        ]
         self.monsters: Dict[str, List[dict]] = {}
         self.items_to_monsters: Dict[str, List[str]] = {}
         self.parse_files()
 
     def parse_files(self):
-        """Parse all files in the specified folder"""
-        print(f"Looking in folder: {os.path.abspath(self.folder_path)}")
-        if not os.path.exists(self.folder_path):
-            print(f"Error: Folder '{self.folder_path}' does not exist")
-            return
+        """Parse all files in the specified folders and their subfolders"""
+        for base_path in self.base_paths:
+            print(f"Looking in folder: {os.path.abspath(base_path)}")
+            if not os.path.exists(base_path):
+                print(f"Error: Folder '{base_path}' does not exist")
+                continue
 
-        files_found = False
-        for filename in os.listdir(self.folder_path):
-            full_path = os.path.join(self.folder_path, filename)
-            if os.path.isfile(full_path):
-                files_found = True
-                monster_name = filename.split('.')[0]
-                print(f"Processing file: {filename}")
-                drops = self.parse_drop_file(full_path)
-                if drops:
-                    self.monsters[monster_name] = drops
-                    for drop in drops:
-                        item = drop['item']
-                        if item not in self.items_to_monsters:
-                            self.items_to_monsters[item] = []
-                        if monster_name not in self.items_to_monsters[item]:
-                            self.items_to_monsters[item].append(monster_name)
+            files_found = False
+            for root, _, files in os.walk(base_path):
+                for filename in files:
+                    full_path = os.path.join(root, filename)
+                    files_found = True
+                    monster_name = filename.split('.')[0]
+                    print(f"Processing file: {full_path}")
+                    drops = self.parse_drop_file(full_path)
+                    if drops:
+                        if monster_name in self.monsters:
+                            self.monsters[monster_name].extend(drops)
+                        else:
+                            self.monsters[monster_name] = drops
+                        for drop in drops:
+                            item = drop['item']
+                            if item not in self.items_to_monsters:
+                                self.items_to_monsters[item] = []
+                            if monster_name not in self.items_to_monsters[item]:
+                                self.items_to_monsters[item].append(monster_name)
+            
+            if not files_found:
+                print(f"No files found in {base_path}")
         
-        if not files_found:
-            print("No files found in the specified folder")
         print(f"Loaded monsters: {list(self.monsters.keys())}")
         print(f"Loaded items: {list(self.items_to_monsters.keys())}")
+
+    def parse_quantity(self, quantity_str: str) -> str:
+        """Parse quantity string, handling both fixed numbers and calc(random(n) + m)"""
+        quantity_str = quantity_str.strip()
+        calc_match = re.match(r'calc\(random\((\d+)\)\s*\+\s*(\d+)\)', quantity_str)
+        if calc_match:
+            random_max = int(calc_match.group(1))
+            offset = int(calc_match.group(2))
+            return f"{offset}-{random_max + offset}"  # e.g., "1-3" for calc(random(2) + 1)
+        try:
+            int(quantity_str)  # Check if it's a simple number
+            return quantity_str
+        except ValueError:
+            return quantity_str  # Return as-is if it's neither
 
     def parse_drop_file(self, file_path: str) -> List[dict]:
         """Parse a single drop file and return list of drops with probabilities"""
@@ -47,7 +69,7 @@ class DropParser:
                 content = f.read()
                 
                 if 'npc_param(death_drop)' in content:
-                    drops.append({'item': 'default_drop', 'chance': '100%', 'quantity': 1, 'members': False})
+                    drops.append({'item': 'default_drop', 'chance': '100%', 'quantity': '1', 'members': False})
 
                 blocks = re.split(r'if\s*\(\$random\s*<\s*(\d+)\)', content)[1:]
                 previous_chance = 0
@@ -64,10 +86,11 @@ class DropParser:
                     
                     for item, quantity in drop_matches:
                         chance = (upper_bound - previous_chance) / 128 * 100
+                        parsed_quantity = self.parse_quantity(quantity)
                         drops.append({
                             'item': item.strip(),
                             'chance': f'{chance:.2f}%',
-                            'quantity': quantity.strip(),
+                            'quantity': parsed_quantity,
                             'members': is_members
                         })
                         previous_chance = upper_bound
@@ -90,12 +113,11 @@ class DropParser:
         monster_name = monster_name.lower()
         all_monsters = list(self.monsters.keys())
         
-        # Get top 5 matches
         matches = self.fuzzy_search(monster_name, all_monsters)
         
-        if matches and matches[0][1] >= 80:  # If best match is 80% or higher
+        if matches and matches[0][1] >= 80:
             for match, score in matches:
-                if score >= 60:  # Show matches with 60%+ similarity
+                if score >= 60:
                     monster = match
                     print(f"\nDrops for {monster} (Match: {score}%):")
                     print("-" * 60)
@@ -115,12 +137,11 @@ class DropParser:
         item_name = item_name.lower()
         all_items = list(self.items_to_monsters.keys())
         
-        # Get top 5 matches
         matches = self.fuzzy_search(item_name, all_items)
         
-        if matches and matches[0][1] >= 80:  # If best match is 80% or higher
+        if matches and matches[0][1] >= 80:
             for match, score in matches:
-                if score >= 60:  # Show matches with 60%+ similarity
+                if score >= 60:
                     item = match
                     print(f"\nMonsters that drop {item} (Match: {score}%):")
                     print("-" * 60)
