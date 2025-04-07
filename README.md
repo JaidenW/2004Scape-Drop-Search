@@ -2,6 +2,8 @@
 
 This is just a really simple app to parse and search the existing drop tables in the source code, it utilizes "fuzzy" search so that you don't need to know the exact item name or you can use space instead of _, or even just type the name slightly wrong.
 
+I also want to mention that the "members" column might be different to what you expect of it. It's not if the item it's self is a members item. Within the drop tables there are certian drops for monsters which require you to be in a members world. This is for things like dark wizards which are F2P monsters, but they have specific items which will only drop on members worlds, for example; Blood Runes. 
+
 ![First Start](https://i.imgur.com/iLWhuIL.png)
 ![Monster Search](https://i.imgur.com/ZXPpGLr.png)
 ![Item Search](https://i.imgur.com/NoHermx.png)
