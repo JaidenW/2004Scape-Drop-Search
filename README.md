@@ -1,6 +1,6 @@
 # 2004Scape (Lost City) Drop Table Search
 
-This is just a really simple app to parse and search the existing drop tables in the source code, it utilizes "fuzzy" search so that you don't need to know the exact item name or you can use space instead of _, or even just type the name slightly wrong, this has a side effect of showing items not related to your search, but i find it preferable to having to know the exact item name in the code.
+This is just a really simple app to parse and search the existing drop tables in the source code, it utilizes "fuzzy" search so that you don't need to know the exact item name or you can use space instead of _, or even just type the name slightly wrong.
 
 ![First Start](https://i.imgur.com/iLWhuIL.png)
 ![Monster Search](https://i.imgur.com/ZXPpGLr.png)
