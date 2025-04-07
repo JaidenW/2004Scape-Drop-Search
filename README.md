@@ -9,6 +9,7 @@ This is just a really simple app to parse and search the existing drop tables in
 ## Requirements
 1. Python
 2. fuzzywuzzy
+3. python-Levenshtein
 
 ## How to use
 1. Create a folder
