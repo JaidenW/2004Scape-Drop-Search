@@ -2,9 +2,9 @@
 
 This is just a really simple app to parse and search the existing drop tables in the source code, it utilizes "fuzzy" search so that you don't need to know the exact item name or you can use space instead of _, or even just type the name slightly wrong, this has a side effect of showing items not related to your search, but i find it preferable to having to know the exact item name in the code.
 
-![First Start](https://github.com/user-attachments/assets/5e6650a1-7496-4c18-89a6-d9ca08b19ffe)
-![Monster Search](https://i.imgur.com/2D6BhpN.png)
-![Item Search](https://i.imgur.com/Dkq0h8u.png)
+![First Start](https://i.imgur.com/Wd0utwa.png)
+![Monster Search](https://i.imgur.com/ZXPpGLr.png)
+![Item Search](https://i.imgur.com/NoHermx.png)
 
 ## Requirements
 1. Python
@@ -17,11 +17,14 @@ This is just a really simple app to parse and search the existing drop tables in
 4. Place the app.py script and other files outside of "Server" directory (like [this](https://i.imgur.com/9UA5cQS.png)
 5. Run the start.bat - this will install the requirements if needed and then launch the app. If you want to install the requirements manually, just run ``py ./app.py`` this does also launch faster since it's not checking for requirements first.
 
-### Final Notes
+### Updates
 
-This is by no means a polished app, it has no GUI and works entirely in command prompt, it's the bare minimum to acomplish the goal. I don't really intend to add any new features, but that doesn't mean if you submit a PR i'll ignore it, it just does what i need it to do. If you want to add something to it, feel free. as long as it could be benificial to someone, i'll happily add it.
+#### 1.0.1 
+- Added support for region based drops, tons of monsters were not included.
 
-This also does not have complete support for every drop, you'll note items named things like "defaultdrop" or "gemdrop", these are not handled by this script because you can generally inferr what those mean, (default drop i'm pretty sure is just bones)
+#### 1.0.2
+- Added support for shared drop tables, including; random herbs, gem drops, rare drops, megarare drops.
+- Reduced the fuzziness but also tuned to be more useful; cha druid now returns chaos_druid instead of druid and when no good match is found, the highest match is still showed in addition to showing prospective matches.
 
 
 If you have any issues, or just want to say thanks, my IGN is Jaiden W
