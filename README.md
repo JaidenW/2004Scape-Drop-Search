@@ -2,7 +2,7 @@
 
 This is just a really simple app to parse and search the existing drop tables in the source code, it utilizes "fuzzy" search so that you don't need to know the exact item name or you can use space instead of _, or even just type the name slightly wrong, this has a side effect of showing items not related to your search, but i find it preferable to having to know the exact item name in the code.
 
-![First Start](https://i.imgur.com/Wd0utwa.png)
+![First Start](https://i.imgur.com/iLWhuIL.png)
 ![Monster Search](https://i.imgur.com/ZXPpGLr.png)
 ![Item Search](https://i.imgur.com/NoHermx.png)
 
@@ -26,5 +26,8 @@ This is just a really simple app to parse and search the existing drop tables in
 - Added support for shared drop tables, including; random herbs, gem drops, rare drops, megarare drops.
 - Reduced the fuzziness but also tuned to be more useful; cha druid now returns chaos_druid instead of druid and when no good match is found, the highest match is still showed in addition to showing prospective matches.
 
+#### 1.0.3
+- Cleaned up the initialization output, now only displays simple counts.
+- Now generates a json list of files without drops, so we don't try to parse them again (delete the file to manually re-parse)
 
 If you have any issues, or just want to say thanks, my IGN is Jaiden W
