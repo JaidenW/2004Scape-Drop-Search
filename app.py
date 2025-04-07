@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from typing import Dict, List
 from fuzzywuzzy import fuzz, process
 
@@ -19,19 +20,24 @@ class DropParser:
         self.monsters: Dict[str, List[dict]] = {}
         self.items_to_monsters: Dict[str, List[str]] = {}
         self.drop_tables: Dict[str, List[dict]] = {}
+        self.empty_files = self.load_empty_files()
         self.parse_files()
 
-    def parse_files(self):
-        if os.path.exists(self.shared_droptables_path):
-            print(f"Processing shared drop tables: {self.shared_droptables_path}")
-            self.parse_shared_droptables(self.shared_droptables_path)
-        else:
-            print(f"Warning: {self.shared_droptables_path} not found")
+    def load_empty_files(self):
+        try:
+            with open("empty_files.json", "r") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
 
+    def parse_files(self):
+        new_empty_files = {}
+        
+        if os.path.exists(self.shared_droptables_path):
+            self.parse_shared_droptables(self.shared_droptables_path)
+        
         for base_path in self.base_paths:
-            print(f"Looking in folder: {os.path.abspath(base_path)}")
             if not os.path.exists(base_path):
-                print(f"Error: Folder '{base_path}' does not exist")
                 continue
 
             files_found = False
@@ -41,10 +47,15 @@ class DropParser:
                     if 'shared_droptables.rs2' in filename.lower():
                         continue
                     files_found = True
-                    monster_name = filename.split('.')[0]
-                    print(f"Processing file: {full_path}")
+                    
+                    current_mtime = os.path.getmtime(full_path)
+                    if full_path in self.empty_files and self.empty_files[full_path] == current_mtime:
+                        new_empty_files[full_path] = current_mtime
+                        continue
+                    
                     drops = self.parse_drop_file(full_path)
                     if drops:
+                        monster_name = filename.split('.')[0]
                         if monster_name in self.monsters:
                             self.monsters[monster_name].extend(drops)
                         else:
@@ -55,13 +66,18 @@ class DropParser:
                                 self.items_to_monsters[item] = []
                             if monster_name not in self.items_to_monsters[item]:
                                 self.items_to_monsters[item].append(monster_name)
+                    else:
+                        new_empty_files[full_path] = current_mtime
             
             if not files_found:
-                print(f"No files found in {base_path}")
+                pass
         
-        print(f"Loaded monsters: {list(self.monsters.keys())}")
-        print(f"Loaded items: {list(self.items_to_monsters.keys())}")
-        print(f"Loaded drop tables: {list(self.drop_tables.keys())}")
+        with open("empty_files.json", "w") as f:
+            json.dump(new_empty_files, f)
+        
+        print(f"Loaded {len(self.monsters)} monsters")
+        print(f"Loaded {len(self.items_to_monsters)} items")
+        print(f"Loaded {len(self.drop_tables)} shared drop tables")
 
     def parse_quantity(self, quantity_str: str) -> str:
         quantity_str = quantity_str.strip()
@@ -125,13 +141,8 @@ class DropParser:
                                 })
                             previous_chance = upper_bound
 
-                if drops:
-                    print(f"Parsed {len(drops)} drops from {file_path}: {drops}")
-                else:
-                    print(f"No drops found in {file_path}")
-                    
-        except Exception as e:
-            print(f"Error parsing {file_path}: {str(e)}")
+        except Exception:
+            pass
             
         return drops
 
@@ -238,20 +249,19 @@ class DropParser:
                     
                     if drops:
                         self.drop_tables[proc_name] = drops
-                        print(f"Parsed {len(drops)} drops for {proc_name}")
                 
                 for table_name, proc_name in self.drop_table_mappings.items():
                     if proc_name in self.drop_tables:
                         self.drop_tables[table_name] = self.drop_tables[proc_name]
                 
-        except Exception as e:
-            print(f"Error parsing {file_path}: {str(e)}")
+        except Exception:
+            pass
 
     def fuzzy_search(self, query: str, choices: List[str], limit: int = 5) -> List[tuple]:
         matches = process.extract(query, choices, limit=limit, scorer=fuzz.ratio)
-        if matches and matches[0][1] == 100:  # Exact match exists
-            return [m for m in matches if m[1] >= 95]  # Only 95%+ matches
-        return matches  # Otherwise return all matches
+        if matches and matches[0][1] == 100:
+            return [m for m in matches if m[1] >= 95]
+        return matches
 
     def display_drop_table(self, table_name: str, base_chance: str = "1/1", is_members: bool = False, visited: set = None) -> None:
         if visited is None:
@@ -289,7 +299,7 @@ class DropParser:
         
         matches = self.fuzzy_search(monster_name, all_monsters)
         
-        if matches and matches[0][1] >= 80:  # Good match found
+        if matches and matches[0][1] >= 80:
             for match, score in matches:
                 if score >= 80:
                     monster = match
@@ -311,8 +321,8 @@ class DropParser:
                     for table_name, (chance, is_members) in special_table_references.items():
                         self.display_drop_table(table_name, chance, is_members)
                     
-                    print("=" * 65)
-        elif matches:  # No good match, but show the best one
+                    print("=" * 60)
+        elif matches:
             best_match, best_score = matches[0]
             monster = best_match
             print(f"\nBest match for '{monster_name}':")
@@ -337,7 +347,7 @@ class DropParser:
             print("=" * 60)
             print(f"Note: No matches above 80%. Showing best match found.")
             print("Did you mean one of these?")
-            for match, score in matches[1:]:  # Skip the best match already shown
+            for match, score in matches[1:]:
                 print(f"  {match} ({score}% match)")
         else:
             print(f"No matches found for '{monster_name}'")
@@ -348,7 +358,7 @@ class DropParser:
         
         matches = self.fuzzy_search(item_name, all_items)
         
-        if matches and matches[0][1] >= 80:  # Good match found
+        if matches and matches[0][1] >= 80:
             for match, score in matches:
                 if score >= 80:
                     item = match
@@ -363,7 +373,7 @@ class DropParser:
                                 adjusted_chance = self.reduce_to_one(drop['chance'])
                                 print(f"{monster:<25} {adjusted_chance:>12} {drop['quantity']:>10} {members_str:>8}")
                     print("=" * 60)
-        elif matches:  # No good match, but show the best one
+        elif matches:
             best_match, best_score = matches[0]
             item = best_match
             print(f"\nBest match for '{item_name}':")
@@ -380,7 +390,7 @@ class DropParser:
             print("=" * 60)
             print(f"Note: No matches above 80%. Showing best match found.")
             print("Did you mean one of these?")
-            for match, score in matches[1:]:  # Skip the best match already shown
+            for match, score in matches[1:]:
                 print(f"  {match} ({score}% match)")
         else:
             print(f"No matches found for '{item_name}'")

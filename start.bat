@@ -24,8 +24,8 @@ if %ERRORLEVEL% NEQ 0 (
     pause
     exit /b 1
 )
-
 echo Launching app.py...
+cls
 python app.py
 if %ERRORLEVEL% NEQ 0 (
     echo Failed to launch app.py. Check if the file exists and there are no errors in the code.
